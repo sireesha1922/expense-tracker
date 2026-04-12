@@ -112,15 +112,18 @@ def edit(i):
     return render_template("edit.html", e=data[i])
 
 # -------- AUTH --------
-@app.route('/register', methods=['GET','POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
+        print("REGISTER HIT")
+        username = request.form['username']
+        password = request.form['password']
         users = load_users()
-        users[request.form['username']] = request.form['password']
+        users[username] = password
         save_users(users)
         return redirect('/login')
-    return render_template("register.html")
-
+    return render_template('register.html')
+    
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method == 'POST':
