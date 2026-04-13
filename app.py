@@ -1,19 +1,13 @@
 import os
-import urllib.parse
 from flask import Flask, render_template, request, redirect
 from pymongo import MongoClient
 
 app = Flask(__name__)
 
-# Safely hard-coded credentials to avoid "Invalid URI" errors
-username = urllib.parse.quote_plus("sireeshaerikela_db_user")
-password = urllib.parse.quote_plus("Siri@123$")
-cluster_url = "cluster0.ms3havz.mongodb.net"
+# This uses your specific password correctly encoded to avoid the 'InvalidURI' error
+uri = "mongodb+srv://sireeshaerikela_db_user:Siri%40123%24@cluster0.ms3havz.mongodb.net/?retryWrites=true&w=majority"
 
-# Construct the URI
-mongo_uri = f"mongodb+srv://{username}:{password}@{cluster_url}/?retryWrites=true&w=majority"
-
-client = MongoClient(mongo_uri)
+client = MongoClient(uri)
 db = client['expense_db']
 users_collection = db['users']
 
@@ -25,6 +19,7 @@ def register():
         if not users_collection.find_one({'username': username}):
             users_collection.insert_one({'username': username, 'password': password})
             return redirect('/login')
+        return "User already exists!"
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -32,4 +27,4 @@ def login():
     return "Login page active"
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=10000)
