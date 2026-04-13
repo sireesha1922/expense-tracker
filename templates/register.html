@@ -1,15 +1,20 @@
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        print("REGISTER HIT")  # ADD THIS LINE
-
-        username = request.form['username']
-        password = request.form['password']
-
-        users = load_users()
-        users[username] = password
-        save_users(users)
-
-        return redirect('/login')
-
-    return render_template('register.html')
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+</head>
+<body>
+    <h2>Register</h2>
+    <form method="POST">
+        <label for="username">Username:</label><br>
+        <input type="text" id="username" name="username" required><br><br>
+        
+        <label for="password">Password:</label><br>
+        <input type="password" id="password" name="password" required><br><br>
+        
+        <button type="submit">Register</button>
+    </form>
+    <br>
+    <a href="/login">Already have an account? Login here</a>
+</body>
+</html>
