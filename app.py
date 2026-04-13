@@ -4,12 +4,16 @@ from pymongo import MongoClient
 
 app = Flask(__name__)
 
-# This uses your specific password correctly encoded to avoid the 'InvalidURI' error
+# Connection string with password encoded to fix InvalidURI errors
 uri = "mongodb+srv://sireeshaerikela_db_user:Siri%40123%24@cluster0.ms3havz.mongodb.net/?retryWrites=true&w=majority"
-
 client = MongoClient(uri)
 db = client['expense_db']
 users_collection = db['users']
+
+# Home route to fix "Not Found" error
+@app.route('/')
+def home():
+    return "Welcome! Go to /register or /login to use the app."
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -24,7 +28,16 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    return "Login page active"
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        user = users_collection.find_one({'username': username, 'password': password})
+        if user:
+            return "Login Successful!"
+        return "Invalid username or password."
+    return render_template('login.html')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    # Automatically binds to the port Render requires
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port)
