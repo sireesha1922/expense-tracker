@@ -1,34 +1,24 @@
-import os
-from flask import Flask, request, render_template, redirect
-from pymongo import MongoClient
+from flask import Flask, render_template, request, redirect
 
 app = Flask(__name__)
 
-# Connect to MongoDB using the URI we saved in Render
-client = MongoClient(os.environ.get('MONGO_URI'))
-db = client['expense_db'] # Your database name
-users_collection = db['users']
+# Replace this with your actual user loading logic
+def load_users():
+    return {} # Placeholder
+
+def save_users(users):
+    pass # Placeholder
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        
-        # Check if user already exists
-        if users_collection.find_one({'username': username}):
-            return "User already exists!"
-            
-        # Save to MongoDB
-        users_collection.insert_one({'username': username, 'password': password})
+        # Your registration logic goes here
         return redirect('/login')
-        
     return render_template('register.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    # Similar logic for login using users_collection.find_one({'username': username})
-    return "Login page"
+    return render_template('login.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
