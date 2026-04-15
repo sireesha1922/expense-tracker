@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+
+<h2>Welcome {{ session['user'] }}</h2>
+
+<a href="/logout">Logout</a>
+
+<h3>Total Expense: ₹{{ total }}</h3>
+
+<h3>Add Expense</h3>
+<form action="/add" method="POST">
+    <input type="text" name="title" placeholder="Title" required>
+    <input type="number" name="amount" placeholder="Amount" required>
+    <input type="text" name="category" placeholder="Category" required>
+    <button type="submit">Add</button>
+</form>
+
+<h3>Your Expenses</h3>
+
+<table border="1">
+    <tr>
+        <th>Title</th>
+        <th>Amount</th>
+        <th>Category</th>
+        <th>Action</th>
+    </tr>
+
+    {% for exp in expenses %}
+    <tr>
+        <td>{{ exp.title }}</td>
+        <td>{{ exp.amount }}</td>
+        <td>{{ exp.category }}</td>
+        <td>
+            <a href="/delete/{{ exp._id }}">Delete</a>
+        </td>
+    </tr>
+    {% endfor %}
+
+</table>
+
+<h3>Category Wise Total</h3>
+
+<ul>
+    {% for k, v in category_total.items() %}
+        <li>{{ k }} : ₹{{ v }}</li>
+    {% endfor %}
+</ul>
+
+</body>
+</html>
