@@ -5,7 +5,7 @@ from bson.objectid import ObjectId
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-# ✅ MongoDB Connection (FINAL WORKING)
+# ✅ MongoDB Connection
 uri = "mongodb+srv://sireeshaerikela_db_user:Siri%40123%24@cluster0.ms3havz.mongodb.net/expense_db?retryWrites=true&w=majority"
 
 client = MongoClient(uri, serverSelectionTimeoutMS=5000)
@@ -14,12 +14,17 @@ db = client["expense_db"]
 users_collection = db["users"]
 expenses_collection = db["expenses"]
 
-# ---------------- HOME ----------------
+# ---------------- HOME / MAIN PAGE ----------------
 @app.route("/")
 def home():
-    if "user" in session:
-        return redirect("/dashboard")
-    return redirect("/login")
+    if "user" not in session:
+        return redirect("/login")
+
+    user = session["user"]
+    expenses = list(expenses_collection.find({"user": user}))
+    total = sum(int(exp["amount"]) for exp in expenses)
+
+    return render_template("index.html", expenses=expenses, total=total)
 
 # ---------------- REGISTER ----------------
 @app.route("/register", methods=["GET", "POST"])
@@ -55,24 +60,11 @@ def login():
 
         if user:
             session["user"] = username
-            return redirect("/dashboard")
+            return redirect("/")
         else:
             return "Invalid login!"
 
     return render_template("login.html")
-
-# ---------------- DASHBOARD ----------------
-@app.route("/dashboard")
-def dashboard():
-    if "user" not in session:
-        return redirect("/login")
-
-    user = session["user"]
-
-    expenses = list(expenses_collection.find({"user": user}))
-    total = sum(int(exp["amount"]) for exp in expenses)
-
-    return render_template("dashboard.html", expenses=expenses, total=total)
 
 # ---------------- ADD EXPENSE ----------------
 @app.route("/add", methods=["POST"])
@@ -89,13 +81,13 @@ def add():
         "category": category
     })
 
-    return redirect("/dashboard")
+    return redirect("/")
 
 # ---------------- DELETE ----------------
 @app.route("/delete/<id>")
 def delete(id):
     expenses_collection.delete_one({"_id": ObjectId(id)})
-    return redirect("/dashboard")
+    return redirect("/")
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
