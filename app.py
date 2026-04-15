@@ -57,8 +57,7 @@ def register():
 
         return redirect("/login")
 
-   return render_template("dashboard.html", ...)
-
+return render_template("index.html", ...)
 # ---------------- LOGIN ----------------
 @app.route("/login", methods=["GET", "POST"])
 def login():
