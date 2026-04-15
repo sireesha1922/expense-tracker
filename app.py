@@ -9,11 +9,13 @@ app.secret_key = "secret123"
 uri = "mongodb+srv://sireeshaerikela_db_user:Siri%40123%24@cluster0.ms3havz.mongodb.net/expense_db?retryWrites=true&w=majority"
 
 client = MongoClient(uri, serverSelectionTimeoutMS=5000)
-db = client["expense_db"]
 
-users_collection = db["users"]
-expenses_collection = db["expenses"]
-
+# TEST CONNECTION
+try:
+    client.server_info()
+    print("MongoDB Connected ✅")
+except Exception as e:
+    print("MongoDB Error ❌:", e)
 # ---------------- HOME / MAIN PAGE ----------------
 @app.route("/")
 def home():
