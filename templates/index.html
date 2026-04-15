@@ -9,31 +9,27 @@
 <h2>Welcome {{ session.user }}</h2>
 
 <!-- ADD EXPENSE -->
+<h3>Add Expense</h3>
 <form action="/add" method="POST">
-    <input type="number" name="amount" placeholder="Amount" required>
-    <input type="text" name="category" placeholder="Category" required>
-    <input type="date" name="date" required>
+    Amount:<br>
+    <input type="number" name="amount" required><br><br>
+
+    Category:<br>
+    <input type="text" name="category" required><br><br>
+
+    Date:<br>
+    <input type="date" name="date" required><br><br>
+
     <button type="submit">Add</button>
 </form>
 
-<br>
+<br><hr><br>
 
-<!-- FILTER -->
-<form method="GET">
-    <input type="text" name="category" placeholder="Filter Category">
-    <input type="month" name="month">
-    <button type="submit">Filter</button>
-</form>
-
-<h3>Total: ₹{{ total }}</h3>
-
-<!-- SMART INSIGHTS -->
-{% if top_category %}
-<p>🔥 Highest spending category: {{ top_category }}</p>
-<p>📅 Highest spending month: {{ top_month }}</p>
-{% endif %}
+<!-- TOTAL -->
+<h3>Total Expense: ₹{{ total }}</h3>
 
 <!-- TABLE -->
+<h3>All Expenses</h3>
 <table border="1" cellpadding="5">
 <tr>
     <th>Amount</th>
@@ -48,34 +44,39 @@
     <td>{{ e.category }}</td>
     <td>{{ e.date }}</td>
     <td>
-        <a href="/delete/{{ loop.index0 }}">Delete</a> |
-        <a href="/edit/{{ loop.index0 }}">Edit</a>
+        <a href="/delete/{{ e._id }}">Delete</a> |
+        <a href="/edit/{{ e._id }}">Edit</a>
     </td>
 </tr>
 {% endfor %}
 
 </table>
 
-<br>
+<br><hr><br>
 
 <!-- CATEGORY WISE -->
-<h3>Category Wise</h3>
+<h3>Category Wise Expenses</h3>
 <ul>
 {% for k, v in category_total.items() %}
     <li>{{ k }} : ₹{{ v }}</li>
 {% endfor %}
 </ul>
 
+<br>
+
 <!-- MONTH WISE -->
-<h3>Month Wise</h3>
+<h3>Month Wise Expenses</h3>
 <ul>
 {% for k, v in month_total.items() %}
     <li>{{ k }} : ₹{{ v }}</li>
 {% endfor %}
 </ul>
 
+<br><hr><br>
+
 <!-- CHARTS -->
 <h3>Charts</h3>
+
 <canvas id="catChart"></canvas>
 <br><br>
 <canvas id="monthChart"></canvas>
@@ -105,7 +106,7 @@ new Chart(document.getElementById("monthChart"), {
 });
 </script>
 
-<br>
+<br><br>
 <a href="/logout">Logout</a>
 
 </body>
