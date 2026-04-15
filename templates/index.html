@@ -14,9 +14,9 @@
             display: flex;
         }
 
-        /* LEFT SIDEBAR */
+        /* SIDEBAR */
         .sidebar {
-            width: 200px;
+            width: 220px;
             height: 100vh;
             background: #2c3e50;
             color: white;
@@ -29,19 +29,19 @@
 
         .sidebar button {
             width: 100%;
-            margin: 10px 0;
+            margin: 8px 0;
             padding: 10px;
             border: none;
             background: #34495e;
             color: white;
             cursor: pointer;
+            border-radius: 5px;
         }
 
         .sidebar button:hover {
             background: #1abc9c;
         }
 
-        /* RIGHT CONTENT */
         .content {
             flex: 1;
             padding: 20px;
@@ -55,15 +55,24 @@
             border-radius: 8px;
         }
 
+        input {
+            width: 90%;
+            padding: 8px;
+        }
+
+        button {
+            padding: 8px 12px;
+        }
+
     </style>
 
     <script>
         function show(id) {
-            document.getElementById("add").style.display = "none";
-            document.getElementById("table").style.display = "none";
-            document.getElementById("category").style.display = "none";
-            document.getElementById("month").style.display = "none";
-            document.getElementById("charts").style.display = "none";
+            let sections = ["add","table","category","month","charts","search","budget"];
+            sections.forEach(s => {
+                let el = document.getElementById(s);
+                if(el) el.style.display = "none";
+            });
 
             document.getElementById(id).style.display = "block";
         }
@@ -84,6 +93,8 @@
         <button onclick="show('category')">Category Wise</button>
         <button onclick="show('month')">Month Wise</button>
         <button onclick="show('charts')">Charts</button>
+        <button onclick="show('search')">Search</button>
+        <button onclick="show('budget')">Budget</button>
 
         <br><br>
         <a href="/logout" style="color:white;">Logout</a>
@@ -93,6 +104,13 @@
     <div class="content">
 
         <h2>Total: ₹{{ total }}</h2>
+
+        {% if budget %}
+            <p>Budget: ₹{{ budget }}</p>
+            {% if total > budget %}
+                <p style="color:red;">⚠ Budget Exceeded!</p>
+            {% endif %}
+        {% endif %}
 
         <!-- ADD -->
         <div id="add" class="box">
@@ -108,7 +126,7 @@
         <!-- TABLE -->
         <div id="table" class="box" style="display:none;">
             <h3>All Expenses</h3>
-            <table border="1">
+            <table border="1" width="100%">
                 <tr>
                     <th>Amount</th>
                     <th>Category</th>
@@ -148,6 +166,24 @@
                 <li>{{ k }} : ₹{{ v }}</li>
             {% endfor %}
             </ul>
+        </div>
+
+        <!-- SEARCH -->
+        <div id="search" class="box" style="display:none;">
+            <h3>Search</h3>
+            <form method="GET">
+                <input type="text" name="search" placeholder="Enter category">
+                <button>Search</button>
+            </form>
+        </div>
+
+        <!-- BUDGET -->
+        <div id="budget" class="box" style="display:none;">
+            <h3>Set Budget</h3>
+            <form method="POST" action="/budget">
+                <input type="number" name="budget" placeholder="Enter budget">
+                <button>Save</button>
+            </form>
         </div>
 
         <!-- CHARTS -->
