@@ -1,46 +1,57 @@
 from flask import Flask, render_template, request, redirect, session
 from pymongo import MongoClient
-from bson.objectid import ObjectId
 
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-# ✅ MongoDB Connection
+# 🔥 MongoDB Connection (your working one)
 uri = "mongodb+srv://sireeshaerikela_db_user:Siri%40123%24@cluster0.ms3havz.mongodb.net/expense_db?retryWrites=true&w=majority"
+client = MongoClient(uri)
+db = client["expense_db"]
 
-client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+users = db["users"]
+expenses_collection = db["expenses"]
 
-# TEST CONNECTION
-try:
-    client.server_info()
-    print("MongoDB Connected ✅")
-except Exception as e:
-    print("MongoDB Error ❌:", e)
-# ---------------- HOME / MAIN PAGE ----------------
+# ---------------- HOME ----------------
 @app.route("/")
 def home():
     if "user" not in session:
         return redirect("/login")
 
-    user = session["user"]
-    expenses = list(expenses_collection.find({"user": user}))
-    total = sum(int(exp["amount"]) for exp in expenses)
+    expenses = list(expenses_collection.find({"user": session["user"]}))
 
-    return render_template("index.html", expenses=expenses, total=total)
+    total = 0
+    for expense in expenses:
+        total += float(expense.get("amount", 0))
+
+    # ✅ FIXED CATEGORY TOTAL
+    category_total = {}
+
+    for expense in expenses:
+        cat = expense.get("category", "Other")
+        amount = float(expense.get("amount", 0))
+
+        if cat in category_total:
+            category_total[cat] += amount
+        else:
+            category_total[cat] = amount
+
+    return render_template(
+        "index.html",
+        expenses=expenses,
+        total=total,
+        category_total=category_total
+    )
 
 # ---------------- REGISTER ----------------
 @app.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        username = request.form["username"]
+        user = request.form["username"]
         password = request.form["password"]
 
-        existing = users_collection.find_one({"username": username})
-        if existing:
-            return "User already exists!"
-
-        users_collection.insert_one({
-            "username": username,
+        users.insert_one({
+            "username": user,
             "password": password
         })
 
@@ -52,19 +63,19 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        username = request.form["username"]
+        user = request.form["username"]
         password = request.form["password"]
 
-        user = users_collection.find_one({
-            "username": username,
+        found = users.find_one({
+            "username": user,
             "password": password
         })
 
-        if user:
-            session["user"] = username
+        if found:
+            session["user"] = user
             return redirect("/")
         else:
-            return "Invalid login!"
+            return "Invalid login"
 
     return render_template("login.html")
 
@@ -74,13 +85,15 @@ def add():
     if "user" not in session:
         return redirect("/login")
 
+    title = request.form["title"]
     amount = request.form["amount"]
     category = request.form["category"]
 
     expenses_collection.insert_one({
-        "user": session["user"],
+        "title": title,
         "amount": amount,
-        "category": category
+        "category": category,
+        "user": session["user"]
     })
 
     return redirect("/")
@@ -88,6 +101,7 @@ def add():
 # ---------------- DELETE ----------------
 @app.route("/delete/<id>")
 def delete(id):
+    from bson.objectid import ObjectId
     expenses_collection.delete_one({"_id": ObjectId(id)})
     return redirect("/")
 
@@ -97,6 +111,6 @@ def logout():
     session.pop("user", None)
     return redirect("/login")
 
-# ---------------- RUN ----------------
+
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000, debug=True)
+    app.run(debug=True)
