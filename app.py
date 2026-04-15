@@ -5,7 +5,7 @@ from bson.objectid import ObjectId
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-# ✅ MongoDB Connection
+# MongoDB
 uri = "mongodb+srv://sireeshaerikela_db_user:Siri%40123%24@cluster0.ms3havz.mongodb.net/expense_db?retryWrites=true&w=majority"
 client = MongoClient(uri)
 db = client["expense_db"]
@@ -14,7 +14,7 @@ users_collection = db["users"]
 expenses_collection = db["expenses"]
 budget_collection = db["budget"]
 
-# ---------------- HOME (MAIN PAGE) ----------------
+# ---------------- HOME ----------------
 @app.route("/")
 def home():
     if "user" not in session:
@@ -22,7 +22,6 @@ def home():
 
     user = session["user"]
 
-    # 🔍 SEARCH
     search = request.args.get("search")
 
     if search:
@@ -33,10 +32,8 @@ def home():
     else:
         expenses = list(expenses_collection.find({"user": user}))
 
-    # 💰 TOTAL
     total = sum(int(e["amount"]) for e in expenses)
 
-    # 📊 CATEGORY + MONTH
     category_total = {}
     month_total = {}
 
@@ -48,34 +45,13 @@ def home():
             month = e["date"][:7]
             month_total[month] = month_total.get(month, 0) + int(e["amount"])
 
-    # 💰 GET BUDGET
-    budget_data = budget_collection.find_one({"user": user})
-    budget = budget_data["amount"] if budget_data else None
-
     return render_template(
         "index.html",
         expenses=expenses,
         total=total,
         category_total=category_total,
-        month_total=month_total,
-        budget=budget
+        month_total=month_total
     )
-
-# ---------------- BUDGET ----------------
-@app.route("/budget", methods=["POST"])
-def set_budget():
-    if "user" not in session:
-        return redirect("/login")
-
-    amount = int(request.form["budget"])
-
-    budget_collection.update_one(
-        {"user": session["user"]},
-        {"$set": {"amount": amount}},
-        upsert=True
-    )
-
-    return redirect("/")
 
 # ---------------- REGISTER ----------------
 @app.route("/register", methods=["GET", "POST"])
@@ -116,21 +92,17 @@ def login():
 
     return render_template("login.html")
 
-# ---------------- ADD EXPENSE ----------------
+# ---------------- ADD ----------------
 @app.route("/add", methods=["POST"])
 def add():
     if "user" not in session:
         return redirect("/login")
 
-    amount = request.form["amount"]
-    category = request.form["category"]
-    date = request.form["date"]
-
     expenses_collection.insert_one({
         "user": session["user"],
-        "amount": amount,
-        "category": category,
-        "date": date
+        "amount": request.form["amount"],
+        "category": request.form["category"],
+        "date": request.form["date"]
     })
 
     return redirect("/")
@@ -147,16 +119,12 @@ def edit(id):
     expense = expenses_collection.find_one({"_id": ObjectId(id)})
 
     if request.method == "POST":
-        amount = request.form["amount"]
-        category = request.form["category"]
-        date = request.form["date"]
-
         expenses_collection.update_one(
             {"_id": ObjectId(id)},
             {"$set": {
-                "amount": amount,
-                "category": category,
-                "date": date
+                "amount": request.form["amount"],
+                "category": request.form["category"],
+                "date": request.form["date"]
             }}
         )
         return redirect("/")
