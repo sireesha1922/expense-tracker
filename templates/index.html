@@ -4,100 +4,162 @@
     <title>Expense Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+        }
+
+        .container {
+            display: flex;
+        }
+
+        /* LEFT SIDEBAR */
+        .sidebar {
+            width: 200px;
+            height: 100vh;
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+        }
+
+        .sidebar h2 {
+            text-align: center;
+        }
+
+        .sidebar button {
+            width: 100%;
+            margin: 10px 0;
+            padding: 10px;
+            border: none;
+            background: #34495e;
+            color: white;
+            cursor: pointer;
+        }
+
+        .sidebar button:hover {
+            background: #1abc9c;
+        }
+
+        /* RIGHT CONTENT */
+        .content {
+            flex: 1;
+            padding: 20px;
+            background: #ecf0f1;
+        }
+
+        .box {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+    </style>
+
     <script>
-        function toggle(id) {
-            let x = document.getElementById(id);
-            if (x.style.display === "none") {
-                x.style.display = "block";
-            } else {
-                x.style.display = "none";
-            }
+        function show(id) {
+            document.getElementById("add").style.display = "none";
+            document.getElementById("table").style.display = "none";
+            document.getElementById("category").style.display = "none";
+            document.getElementById("month").style.display = "none";
+            document.getElementById("charts").style.display = "none";
+
+            document.getElementById(id).style.display = "block";
         }
     </script>
 </head>
+
 <body>
 
-<h2>Welcome {{ session.user }}</h2>
+<div class="container">
 
-<!-- ADD EXPENSE -->
-<h3>Add Expense</h3>
-<form action="/add" method="POST">
-    Amount:<br>
-    <input type="number" name="amount" required><br><br>
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+        <h2>💰 Tracker</h2>
+        <p>👤 {{ session.user }}</p>
 
-    Category:<br>
-    <input type="text" name="category" required><br><br>
+        <button onclick="show('add')">Add Expense</button>
+        <button onclick="show('table')">All Expenses</button>
+        <button onclick="show('category')">Category Wise</button>
+        <button onclick="show('month')">Month Wise</button>
+        <button onclick="show('charts')">Charts</button>
 
-    Date:<br>
-    <input type="date" name="date" required><br><br>
+        <br><br>
+        <a href="/logout" style="color:white;">Logout</a>
+    </div>
 
-    <button type="submit">Add</button>
-</form>
+    <!-- CONTENT -->
+    <div class="content">
 
-<hr>
+        <h2>Total: ₹{{ total }}</h2>
 
-<h3>Total: ₹{{ total }}</h3>
+        <!-- ADD -->
+        <div id="add" class="box">
+            <h3>Add Expense</h3>
+            <form action="/add" method="POST">
+                <input type="number" name="amount" placeholder="Amount" required><br><br>
+                <input type="text" name="category" placeholder="Category" required><br><br>
+                <input type="date" name="date" required><br><br>
+                <button>Add</button>
+            </form>
+        </div>
 
-<!-- BUTTONS -->
-<button onclick="toggle('tableDiv')">Show Expenses</button>
-<button onclick="toggle('catDiv')">Category Wise</button>
-<button onclick="toggle('monthDiv')">Month Wise</button>
-<button onclick="toggle('chartDiv')">Charts</button>
+        <!-- TABLE -->
+        <div id="table" class="box" style="display:none;">
+            <h3>All Expenses</h3>
+            <table border="1">
+                <tr>
+                    <th>Amount</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Action</th>
+                </tr>
 
-<hr>
+                {% for e in expenses %}
+                <tr>
+                    <td>{{ e.amount }}</td>
+                    <td>{{ e.category }}</td>
+                    <td>{{ e.date }}</td>
+                    <td>
+                        <a href="/delete/{{ e._id }}">Delete</a> |
+                        <a href="/edit/{{ e._id }}">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
 
-<!-- TABLE -->
-<div id="tableDiv" style="display:none;">
-<h3>All Expenses</h3>
-<table border="1">
-<tr>
-    <th>Amount</th>
-    <th>Category</th>
-    <th>Date</th>
-    <th>Action</th>
-</tr>
+        <!-- CATEGORY -->
+        <div id="category" class="box" style="display:none;">
+            <h3>Category Wise</h3>
+            <ul>
+            {% for k, v in category_total.items() %}
+                <li>{{ k }} : ₹{{ v }}</li>
+            {% endfor %}
+            </ul>
+        </div>
 
-{% for e in expenses %}
-<tr>
-    <td>{{ e.amount }}</td>
-    <td>{{ e.category }}</td>
-    <td>{{ e.date }}</td>
-    <td>
-        <a href="/delete/{{ e._id }}">Delete</a> |
-        <a href="/edit/{{ e._id }}">Edit</a>
-    </td>
-</tr>
-{% endfor %}
+        <!-- MONTH -->
+        <div id="month" class="box" style="display:none;">
+            <h3>Month Wise</h3>
+            <ul>
+            {% for k, v in month_total.items() %}
+                <li>{{ k }} : ₹{{ v }}</li>
+            {% endfor %}
+            </ul>
+        </div>
 
-</table>
-</div>
+        <!-- CHARTS -->
+        <div id="charts" class="box" style="display:none;">
+            <h3>Charts</h3>
+            <canvas id="catChart"></canvas>
+            <br><br>
+            <canvas id="monthChart"></canvas>
+        </div>
 
-<!-- CATEGORY -->
-<div id="catDiv" style="display:none;">
-<h3>Category Wise</h3>
-<ul>
-{% for k, v in category_total.items() %}
-    <li>{{ k }} : ₹{{ v }}</li>
-{% endfor %}
-</ul>
-</div>
+    </div>
 
-<!-- MONTH -->
-<div id="monthDiv" style="display:none;">
-<h3>Month Wise</h3>
-<ul>
-{% for k, v in month_total.items() %}
-    <li>{{ k }} : ₹{{ v }}</li>
-{% endfor %}
-</ul>
-</div>
-
-<!-- CHART -->
-<div id="chartDiv" style="display:none;">
-<h3>Charts</h3>
-<canvas id="catChart"></canvas>
-<br><br>
-<canvas id="monthChart"></canvas>
 </div>
 
 <script>
@@ -120,9 +182,6 @@ new Chart(document.getElementById("monthChart"), {
     }
 });
 </script>
-
-<br><br>
-<a href="/logout">Logout</a>
 
 </body>
 </html>
