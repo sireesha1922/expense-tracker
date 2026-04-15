@@ -5,10 +5,10 @@ from bson.objectid import ObjectId
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-# ✅ MongoDB Connection (FIXED)
-uri = "mongodb+srv://sireeshaerikela_db_user:Siri%40123%24@cluster0.ms3havz.mongodb.net/expense_db?retryWrites=true&w=majority&tls=true"
+# ✅ MongoDB Connection (FINAL WORKING)
+uri = "mongodb+srv://sireeshaerikela_db_user:Siri%40123%24@cluster0.ms3havz.mongodb.net/expense_db?retryWrites=true&w=majority"
 
-client = MongoClient(uri, tlsAllowInvalidCertificates=True)
+client = MongoClient(uri, serverSelectionTimeoutMS=5000)
 db = client["expense_db"]
 
 users_collection = db["users"]
@@ -105,5 +105,4 @@ def logout():
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
-    app.run(debug=True)
     app.run(host="0.0.0.0", port=10000, debug=True)
