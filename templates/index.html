@@ -3,6 +3,17 @@
 <head>
     <title>Expense Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        function toggle(id) {
+            let x = document.getElementById(id);
+            if (x.style.display === "none") {
+                x.style.display = "block";
+            } else {
+                x.style.display = "none";
+            }
+        }
+    </script>
 </head>
 <body>
 
@@ -23,14 +34,22 @@
     <button type="submit">Add</button>
 </form>
 
-<br><hr><br>
+<hr>
 
-<!-- TOTAL -->
-<h3>Total Expense: ₹{{ total }}</h3>
+<h3>Total: ₹{{ total }}</h3>
+
+<!-- BUTTONS -->
+<button onclick="toggle('tableDiv')">Show Expenses</button>
+<button onclick="toggle('catDiv')">Category Wise</button>
+<button onclick="toggle('monthDiv')">Month Wise</button>
+<button onclick="toggle('chartDiv')">Charts</button>
+
+<hr>
 
 <!-- TABLE -->
+<div id="tableDiv" style="display:none;">
 <h3>All Expenses</h3>
-<table border="1" cellpadding="5">
+<table border="1">
 <tr>
     <th>Amount</th>
     <th>Category</th>
@@ -51,35 +70,35 @@
 {% endfor %}
 
 </table>
+</div>
 
-<br><hr><br>
-
-<!-- CATEGORY WISE -->
-<h3>Category Wise Expenses</h3>
+<!-- CATEGORY -->
+<div id="catDiv" style="display:none;">
+<h3>Category Wise</h3>
 <ul>
 {% for k, v in category_total.items() %}
     <li>{{ k }} : ₹{{ v }}</li>
 {% endfor %}
 </ul>
+</div>
 
-<br>
-
-<!-- MONTH WISE -->
-<h3>Month Wise Expenses</h3>
+<!-- MONTH -->
+<div id="monthDiv" style="display:none;">
+<h3>Month Wise</h3>
 <ul>
 {% for k, v in month_total.items() %}
     <li>{{ k }} : ₹{{ v }}</li>
 {% endfor %}
 </ul>
+</div>
 
-<br><hr><br>
-
-<!-- CHARTS -->
+<!-- CHART -->
+<div id="chartDiv" style="display:none;">
 <h3>Charts</h3>
-
 <canvas id="catChart"></canvas>
 <br><br>
 <canvas id="monthChart"></canvas>
+</div>
 
 <script>
 let catData = {{ category_total | tojson }};
@@ -89,9 +108,7 @@ new Chart(document.getElementById("catChart"), {
     type: "pie",
     data: {
         labels: Object.keys(catData),
-        datasets: [{
-            data: Object.values(catData)
-        }]
+        datasets: [{ data: Object.values(catData) }]
     }
 });
 
@@ -99,9 +116,7 @@ new Chart(document.getElementById("monthChart"), {
     type: "bar",
     data: {
         labels: Object.keys(monthData),
-        datasets: [{
-            data: Object.values(monthData)
-        }]
+        datasets: [{ data: Object.values(monthData) }]
     }
 });
 </script>
