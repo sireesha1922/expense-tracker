@@ -21,8 +21,15 @@ def home():
 
     user = session["user"]
 
-    expenses = list(expenses_collection.find({"user": user}))
+search = request.args.get("search")
 
+if search:
+    expenses = list(expenses_collection.find({
+        "user": user,
+        "category": {"$regex": search, "$options": "i"}
+    }))
+else:
+    expenses = list(expenses_collection.find({"user": user}))
     total = sum(int(e["amount"]) for e in expenses)
 
     category_total = {}
