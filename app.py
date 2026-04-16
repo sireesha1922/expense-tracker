@@ -21,7 +21,6 @@ def home():
         return redirect("/login")
 
     user = session["user"]
-
     search = request.args.get("search")
 
     if search:
@@ -32,25 +31,30 @@ def home():
     else:
         expenses = list(expenses_collection.find({"user": user}))
 
-    total = sum(int(e["amount"]) for e in expenses)
+    total = sum(int(e.get("amount", 0)) for e in expenses)
 
     category_total = {}
     month_total = {}
 
     for e in expenses:
-        cat = e["category"]
-        category_total[cat] = category_total.get(cat, 0) + int(e["amount"])
+        cat = e.get("category", "Other")
+        category_total[cat] = category_total.get(cat, 0) + int(e.get("amount", 0))
 
         if "date" in e:
             month = e["date"][:7]
-            month_total[month] = month_total.get(month, 0) + int(e["amount"])
+            month_total[month] = month_total.get(month, 0) + int(e.get("amount", 0))
+
+    # Budget
+    budget_data = budget_collection.find_one({"user": user})
+    budget = int(budget_data["amount"]) if budget_data else 0
 
     return render_template(
         "index.html",
         expenses=expenses,
         total=total,
         category_total=category_total,
-        month_total=month_total
+        month_total=month_total,
+        budget=budget
     )
 
 # ---------------- REGISTER ----------------
@@ -130,6 +134,22 @@ def edit(id):
         return redirect("/")
 
     return render_template("edit.html", e=expense)
+
+# ---------------- SET BUDGET ----------------
+@app.route("/budget", methods=["POST"])
+def set_budget():
+    if "user" not in session:
+        return redirect("/login")
+
+    amount = request.form["budget"]
+
+    budget_collection.update_one(
+        {"user": session["user"]},
+        {"$set": {"amount": amount}},
+        upsert=True
+    )
+
+    return redirect("/")
 
 # ---------------- LOGOUT ----------------
 @app.route("/logout")
