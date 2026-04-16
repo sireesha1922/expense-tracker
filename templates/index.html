@@ -1,159 +1,104 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Expense Tracker</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<title>Expense Tracker</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-    <style>
-        body {
-            margin: 0;
-            font-family: 'Segoe UI';
-            background: #f5f7fa;
-        }
+<style>
+body { font-family: Arial; background:#f5f7fa; }
 
-        .header {
-            background: #4CAF50;
-            color: white;
-            padding: 15px;
-            text-align: center;
-        }
+.card {
+background:white;
+padding:15px;
+margin:10px;
+border-radius:10px;
+}
 
-        .container {
-            padding: 15px;
-        }
+button {
+background:green;
+color:white;
+padding:10px;
+border:none;
+margin:5px;
+}
+.hidden { display:none; }
+</style>
 
-        .card {
-            background: white;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 12px;
-        }
+<script>
+function show(id){
+document.getElementById("add").style.display="none";
+document.getElementById("table").style.display="none";
+document.getElementById("charts").style.display="none";
+document.getElementById("budget").style.display="none";
 
-        .menu {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 10px;
-        }
-
-        .menu button {
-            padding: 15px;
-            background: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 10px;
-            cursor: pointer;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        input {
-            width: 95%;
-            padding: 10px;
-            margin: 5px 0;
-        }
-
-        table {
-            width: 100%;
-        }
-    </style>
-
-    <script>
-        function show(id) {
-            let sections = document.getElementsByClassName("section");
-            for (let i = 0; i < sections.length; i++) {
-                sections[i].style.display = "none";
-            }
-            document.getElementById(id).style.display = "block";
-        }
-    </script>
+document.getElementById(id).style.display="block";
+}
+</script>
 </head>
 
 <body>
 
-<div class="header">
-    💰 Expense Tracker | 👤 {{ session.user }}
+<div class="card">
+<h2>Total: ₹{{ total }}</h2>
+<h3>Budget: ₹{{ budget }}</h3>
 </div>
 
-<div class="container">
+<div class="card">
+<button onclick="show('add')">Add</button>
+<button onclick="show('table')">Expenses</button>
+<button onclick="show('charts')">Charts</button>
+<button onclick="show('budget')">Budget</button>
+</div>
 
-    <!-- TOTAL + BUDGET -->
-    <div class="card">
-        <h2>Total: ₹{{ total }}</h2>
-        <h3>Budget: ₹{{ budget }}</h3>
+<!-- ADD -->
+<div id="add" class="card">
+<form action="/add" method="POST">
+<input type="number" name="amount" placeholder="Amount" required><br>
+<input type="text" name="category" placeholder="Category" required><br>
+<input type="date" name="date" required><br>
+<button>Add</button>
+</form>
+</div>
 
-        {% if total > budget and budget > 0 %}
-        <p style="color:red;">⚠ Over Budget!</p>
-        {% endif %}
-    </div>
+<!-- TABLE -->
+<div id="table" class="card hidden">
+<table border="1">
+<tr><th>₹</th><th>Category</th><th>Date</th><th>Action</th></tr>
 
-    <!-- MENU -->
-    <div class="card menu">
-        <button onclick="show('add')">Add Expense</button>
-        <button onclick="show('table')">View Expenses</button>
-        <button onclick="show('charts')">View Charts</button>
-        <button onclick="show('budget')">Set Budget</button>
-    </div>
+{% for e in expenses %}
+<tr>
+<td>{{ e.amount }}</td>
+<td>{{ e.category }}</td>
+<td>{{ e.date }}</td>
+<td>
+<a href="/delete/{{ e._id }}">❌</a>
+<a href="/edit/{{ e._id }}">✏</a>
+</td>
+</tr>
+{% endfor %}
+</table>
+</div>
 
-    <!-- ADD -->
-    <div id="add" class="card section">
-        <form action="/add" method="POST">
-            <input type="number" name="amount" placeholder="Amount" required>
-            <input type="text" name="category" placeholder="Category" required>
-            <input type="date" name="date" required>
-            <button>Add</button>
-        </form>
-    </div>
+<!-- BUDGET -->
+<div id="budget" class="card hidden">
+<form action="/budget" method="POST">
+<input type="number" name="budget" placeholder="Set Budget" required>
+<button>Save</button>
+</form>
+</div>
 
-    <!-- TABLE -->
-    <div id="table" class="card section hidden">
-        <table border="1">
-            <tr>
-                <th>Amount</th>
-                <th>Category</th>
-                <th>Date</th>
-                <th>Action</th>
-            </tr>
+<!-- CHARTS -->
+<div id="charts" class="card hidden">
 
-            {% for e in expenses %}
-            <tr>
-                <td>{{ e.amount }}</td>
-                <td>{{ e.category }}</td>
-                <td>{{ e.date }}</td>
-                <td>
-                    <a href="/delete/{{ e._id }}">❌</a>
-                    <a href="/edit/{{ e._id }}">✏</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
+<div style="width:300px;height:300px;margin:auto;">
+<canvas id="catChart"></canvas>
+</div>
 
-    <!-- BUDGET -->
-    <div id="budget" class="card section hidden">
-        <form action="/budget" method="POST">
-            <input type="number" name="budget" placeholder="Set Budget" required>
-            <button>Save</button>
-        </form>
-    </div>
+<br><br>
 
-    <!-- CHARTS -->
-    <div id="charts" class="card section hidden">
-        <h3 style="text-align:center;">Charts</h3>
-
-        <!-- FIXED PIE CHART -->
-        <div style="width:300px; height:300px; margin:auto;">
-            <canvas id="catChart"></canvas>
-        </div>
-
-        <br><br>
-
-        <!-- BAR CHART -->
-        <div style="width:500px; margin:auto;">
-            <canvas id="monthChart"></canvas>
-        </div>
-    </div>
+<div style="width:500px;margin:auto;">
+<canvas id="monthChart"></canvas>
+</div>
 
 </div>
 
@@ -161,34 +106,15 @@
 let catData = {{ category_total | tojson }};
 let monthData = {{ month_total | tojson }};
 
-// PIE CHART FIXED
 new Chart(document.getElementById("catChart"), {
-    type: "pie",
-    data: {
-        labels: Object.keys(catData),
-        datasets: [{
-            data: Object.values(catData)
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true
-    }
+type:"pie",
+data:{labels:Object.keys(catData),datasets:[{data:Object.values(catData)}]},
+options:{maintainAspectRatio:true}
 });
 
-// BAR CHART
 new Chart(document.getElementById("monthChart"), {
-    type: "bar",
-    data: {
-        labels: Object.keys(monthData),
-        datasets: [{
-            data: Object.values(monthData)
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: true
-    }
+type:"bar",
+data:{labels:Object.keys(monthData),datasets:[{data:Object.values(monthData)}]}
 });
 </script>
 
