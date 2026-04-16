@@ -10,6 +10,7 @@ body {
     background: #f5f7fa;
 }
 
+/* HEADER */
 .header {
     background: #4CAF50;
     color: white;
@@ -18,6 +19,7 @@ body {
     font-size: 20px;
 }
 
+/* CARD */
 .card {
     background: white;
     padding: 20px;
@@ -25,22 +27,26 @@ body {
     border-radius: 10px;
 }
 
+/* GRID */
 .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
+    gap: 12px;
 }
 
+/* BUTTON */
 .btn {
     background: #4CAF50;
     color: white;
-    padding: 15px;
+    padding: 18px;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
+    font-size: 16px;
     text-align: left;
     cursor: pointer;
 }
 
+/* HIDDEN SECTIONS */
 .hidden {
     display: none;
 }
@@ -58,6 +64,9 @@ function show(id){
     document.getElementById("table").style.display="none";
     document.getElementById("charts").style.display="none";
     document.getElementById("budget").style.display="none";
+    document.getElementById("category").style.display="none";
+    document.getElementById("month").style.display="none";
+    document.getElementById("search").style.display="none";
 
     document.getElementById(id).style.display="block";
 }
@@ -66,19 +75,25 @@ function show(id){
 
 <body>
 
+<!-- HEADER -->
 <div class="header">
 💰 Expense Tracker | {{ session['user'] }}
 </div>
 
+<!-- TOTAL -->
 <div class="card">
-<h2>Total Spent</h2>
+<h3>Total Spent</h3>
 <h1>₹{{ total }}</h1>
 </div>
 
+<!-- 7 BUTTON GRID -->
 <div class="card grid">
 <button class="btn" onclick="show('add')">➕ Add</button>
 <button class="btn" onclick="show('table')">📋 Expenses</button>
-<button class="btn" onclick="show('charts')">📊 Charts</button>
+<button class="btn" onclick="show('category')">📊 Category</button>
+<button class="btn" onclick="show('month')">📅 Month</button>
+<button class="btn" onclick="show('charts')">📈 Charts</button>
+<button class="btn" onclick="show('search')">🔍 Search</button>
 <button class="btn" onclick="show('budget')">💰 Budget</button>
 </div>
 
@@ -93,25 +108,50 @@ function show(id){
 </form>
 </div>
 
-<!-- TABLE -->
+<!-- EXPENSES -->
 <div id="table" class="card hidden">
 <h3>Expenses</h3>
 <table border="1" width="100%">
-<tr><th>Amount</th><th>Category</th><th>Date</th><th>Action</th></tr>
+<tr><th>Amount</th><th>Category</th><th>Date</th></tr>
 
 {% for e in expenses %}
 <tr>
 <td>{{ e.amount }}</td>
 <td>{{ e.category }}</td>
 <td>{{ e.date }}</td>
-<td>
-<a href="/delete/{{ e._id }}">❌</a>
-<a href="/edit/{{ e._id }}">✏</a>
-</td>
 </tr>
 {% endfor %}
 
 </table>
+</div>
+
+<!-- CATEGORY -->
+<div id="category" class="card hidden">
+<h3>Category Wise</h3>
+<ul>
+{% for k,v in category_total.items() %}
+<li>{{ k }} → ₹{{ v }}</li>
+{% endfor %}
+</ul>
+</div>
+
+<!-- MONTH -->
+<div id="month" class="card hidden">
+<h3>Month Wise</h3>
+<ul>
+{% for k,v in month_total.items() %}
+<li>{{ k }} → ₹{{ v }}</li>
+{% endfor %}
+</ul>
+</div>
+
+<!-- SEARCH -->
+<div id="search" class="card hidden">
+<h3>Search</h3>
+<form method="GET" action="/">
+<input type="text" name="search" placeholder="Enter category">
+<button class="btn">Search</button>
+</form>
 </div>
 
 <!-- BUDGET -->
