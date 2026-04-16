@@ -31,22 +31,21 @@ body {
 .grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 15px;
 }
 
-/* BUTTON */
+/* BIG GREEN BUTTON */
 .btn {
     background: #4CAF50;
     color: white;
-    padding: 18px;
+    padding: 25px;
     border: none;
-    border-radius: 10px;
+    border-radius: 12px;
     font-size: 16px;
-    text-align: left;
     cursor: pointer;
 }
 
-/* HIDDEN SECTIONS */
+/* HIDDEN */
 .hidden {
     display: none;
 }
@@ -60,14 +59,10 @@ input {
 
 <script>
 function show(id){
-    document.getElementById("add").style.display="none";
-    document.getElementById("table").style.display="none";
-    document.getElementById("charts").style.display="none";
-    document.getElementById("budget").style.display="none";
-    document.getElementById("category").style.display="none";
-    document.getElementById("month").style.display="none";
-    document.getElementById("search").style.display="none";
-
+    let sections = ["add","table","charts","budget","category","month","search"];
+    sections.forEach(s => {
+        document.getElementById(s).style.display="none";
+    });
     document.getElementById(id).style.display="block";
 }
 </script>
@@ -86,7 +81,7 @@ function show(id){
 <h1>₹{{ total }}</h1>
 </div>
 
-<!-- 7 BUTTON GRID -->
+<!-- 7 BUTTONS -->
 <div class="card grid">
 <button class="btn" onclick="show('add')">➕ Add</button>
 <button class="btn" onclick="show('table')">📋 Expenses</button>
@@ -98,7 +93,7 @@ function show(id){
 </div>
 
 <!-- ADD -->
-<div id="add" class="card">
+<div id="add" class="card hidden">
 <h3>Add Expense</h3>
 <form action="/add" method="POST">
 <input type="number" name="amount" placeholder="Amount" required>
@@ -113,7 +108,6 @@ function show(id){
 <h3>Expenses</h3>
 <table border="1" width="100%">
 <tr><th>Amount</th><th>Category</th><th>Date</th></tr>
-
 {% for e in expenses %}
 <tr>
 <td>{{ e.amount }}</td>
@@ -121,7 +115,6 @@ function show(id){
 <td>{{ e.date }}</td>
 </tr>
 {% endfor %}
-
 </table>
 </div>
 
@@ -157,8 +150,8 @@ function show(id){
 <!-- BUDGET -->
 <div id="budget" class="card hidden">
 <h3>Set Budget</h3>
-<form action="/budget" method="POST">
-<input type="number" name="budget" placeholder="Enter Budget">
+<form>
+<input type="number" placeholder="Enter Budget">
 <button class="btn">Save</button>
 </form>
 </div>
@@ -167,13 +160,13 @@ function show(id){
 <div id="charts" class="card hidden">
 <h3>Charts</h3>
 
-<div style="width:300px;margin:auto;">
+<div style="width:250px;margin:auto;">
 <canvas id="catChart"></canvas>
 </div>
 
 <br>
 
-<div style="width:500px;margin:auto;">
+<div style="width:400px;margin:auto;">
 <canvas id="monthChart"></canvas>
 </div>
 
