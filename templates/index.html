@@ -5,7 +5,11 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
     <style>
-        body { margin: 0; font-family: 'Segoe UI'; background: #f5f7fa; }
+        body {
+            margin: 0;
+            font-family: 'Segoe UI';
+            background: #f5f7fa;
+        }
 
         .header {
             background: #4CAF50;
@@ -14,7 +18,9 @@
             text-align: center;
         }
 
-        .container { padding: 15px; }
+        .container {
+            padding: 15px;
+        }
 
         .card {
             background: white;
@@ -35,9 +41,12 @@
             color: white;
             border: none;
             border-radius: 10px;
+            cursor: pointer;
         }
 
-        .hidden { display: none; }
+        .hidden {
+            display: none;
+        }
 
         input {
             width: 95%;
@@ -45,8 +54,9 @@
             margin: 5px 0;
         }
 
-        table { width: 100%; }
-
+        table {
+            width: 100%;
+        }
     </style>
 
     <script>
@@ -68,64 +78,82 @@
 
 <div class="container">
 
-<div class="card">
-    <h2>Total: ₹{{ total }}</h2>
-    <h3>Budget: ₹{{ budget }}</h3>
+    <!-- TOTAL + BUDGET -->
+    <div class="card">
+        <h2>Total: ₹{{ total }}</h2>
+        <h3>Budget: ₹{{ budget }}</h3>
 
-    {% if total > budget and budget > 0 %}
-    <p style="color:red;">⚠ Over Budget!</p>
-    {% endif %}
-</div>
+        {% if total > budget and budget > 0 %}
+        <p style="color:red;">⚠ Over Budget!</p>
+        {% endif %}
+    </div>
 
-<div class="card menu">
-    <button onclick="show('add')">Add</button>
-    <button onclick="show('table')">Expenses</button>
-    <button onclick="show('charts')">Charts</button>
-    <button onclick="show('budget')">Budget</button>
-</div>
+    <!-- MENU -->
+    <div class="card menu">
+        <button onclick="show('add')">Add Expense</button>
+        <button onclick="show('table')">View Expenses</button>
+        <button onclick="show('charts')">View Charts</button>
+        <button onclick="show('budget')">Set Budget</button>
+    </div>
 
-<div id="add" class="card section">
-    <form action="/add" method="POST">
-        <input type="number" name="amount" placeholder="Amount" required>
-        <input type="text" name="category" placeholder="Category" required>
-        <input type="date" name="date" required>
-        <button>Add</button>
-    </form>
-</div>
+    <!-- ADD -->
+    <div id="add" class="card section">
+        <form action="/add" method="POST">
+            <input type="number" name="amount" placeholder="Amount" required>
+            <input type="text" name="category" placeholder="Category" required>
+            <input type="date" name="date" required>
+            <button>Add</button>
+        </form>
+    </div>
 
-<div id="table" class="card section hidden">
-<table border="1">
-<tr><th>₹</th><th>Category</th><th>Date</th><th>Action</th></tr>
+    <!-- TABLE -->
+    <div id="table" class="card section hidden">
+        <table border="1">
+            <tr>
+                <th>Amount</th>
+                <th>Category</th>
+                <th>Date</th>
+                <th>Action</th>
+            </tr>
 
-{% for e in expenses %}
-<tr>
-<td>{{ e.amount }}</td>
-<td>{{ e.category }}</td>
-<td>{{ e.date }}</td>
-<td>
-<a href="/delete/{{ e._id }}">❌</a>
-<a href="/edit/{{ e._id }}">✏</a>
-</td>
-</tr>
-{% endfor %}
+            {% for e in expenses %}
+            <tr>
+                <td>{{ e.amount }}</td>
+                <td>{{ e.category }}</td>
+                <td>{{ e.date }}</td>
+                <td>
+                    <a href="/delete/{{ e._id }}">❌</a>
+                    <a href="/edit/{{ e._id }}">✏</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
 
-</table>
-</div>
+    <!-- BUDGET -->
+    <div id="budget" class="card section hidden">
+        <form action="/budget" method="POST">
+            <input type="number" name="budget" placeholder="Set Budget" required>
+            <button>Save</button>
+        </form>
+    </div>
 
-<div id="budget" class="card section hidden">
-<form action="/budget" method="POST">
-<input type="number" name="budget" placeholder="Set Budget" required>
-<button>Save</button>
-</form>
-</div>
+    <!-- CHARTS -->
+    <div id="charts" class="card section hidden">
+        <h3 style="text-align:center;">Charts</h3>
 
-<div id="charts" class="card section hidden">
-<div style="text-align:center;">
-<canvas id="catChart" style="max-width:300px;"></canvas>
-</div>
-<br>
-<canvas id="monthChart" style="max-width:500px;"></canvas>
-</div>
+        <!-- FIXED PIE CHART -->
+        <div style="width:300px; height:300px; margin:auto;">
+            <canvas id="catChart"></canvas>
+        </div>
+
+        <br><br>
+
+        <!-- BAR CHART -->
+        <div style="width:500px; margin:auto;">
+            <canvas id="monthChart"></canvas>
+        </div>
+    </div>
 
 </div>
 
@@ -133,14 +161,34 @@
 let catData = {{ category_total | tojson }};
 let monthData = {{ month_total | tojson }};
 
+// PIE CHART FIXED
 new Chart(document.getElementById("catChart"), {
-type: "pie",
-data: { labels: Object.keys(catData), datasets: [{ data: Object.values(catData) }] }
+    type: "pie",
+    data: {
+        labels: Object.keys(catData),
+        datasets: [{
+            data: Object.values(catData)
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true
+    }
 });
 
+// BAR CHART
 new Chart(document.getElementById("monthChart"), {
-type: "bar",
-data: { labels: Object.keys(monthData), datasets: [{ data: Object.values(monthData) }] }
+    type: "bar",
+    data: {
+        labels: Object.keys(monthData),
+        datasets: [{
+            data: Object.values(monthData)
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true
+    }
 });
 </script>
 
