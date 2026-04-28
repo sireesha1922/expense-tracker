@@ -1,162 +1,143 @@
 from flask import Flask, render_template, request, redirect, session
-from pymongo import MongoClient
-from bson.objectid import ObjectId
+import json, os
 
 app = Flask(__name__)
 app.secret_key = "secret123"
 
-# MongoDB
-uri = "mongodb+srv://sireeshaerikela_db_user:Siri%40123%24@cluster0.ms3havz.mongodb.net/expense_db?retryWrites=true&w=majority"
-client = MongoClient(uri)
-db = client["expense_db"]
+# -------- USERS --------
+def load_users():
+    if not os.path.exists("users.json"):
+        return {}
+    with open("users.json", "r") as f:
+        return json.load(f)
 
-users_collection = db["users"]
-expenses_collection = db["expenses"]
-budget_collection = db["budget"]
+def save_users(users):
+    with open("users.json", "w") as f:
+        json.dump(users, f, indent=4)
 
-# ---------------- HOME ----------------
-@app.route("/")
-def home():
-    if "user" not in session:
-        return redirect("/login")
+# -------- DATA --------
+def get_file():
+    return f"{session['user']}_expenses.json"
 
-    user = session["user"]
-    search = request.args.get("search")
+def load_data():
+    file = get_file()
+    if not os.path.exists(file):
+        return []
+    with open(file, "r") as f:
+        return json.load(f)
 
-    if search:
-        expenses = list(expenses_collection.find({
-            "user": user,
-            "category": {"$regex": search, "$options": "i"}
-        }))
-    else:
-        expenses = list(expenses_collection.find({"user": user}))
+def save_data(data):
+    with open(get_file(), "w") as f:
+        json.dump(data, f, indent=4)
 
-    total = sum(int(e.get("amount", 0)) for e in expenses)
+# -------- HOME --------
+@app.route('/')
+def index():
+    if 'user' not in session:
+        return redirect('/login')
 
+    data = load_data()
+
+    # FILTER
+    selected_cat = request.args.get("category")
+    selected_month = request.args.get("month")
+
+    if selected_cat:
+        data = [d for d in data if d["category"] == selected_cat]
+
+    if selected_month:
+        data = [d for d in data if d["date"].startswith(selected_month)]
+
+    total = sum(d["amount"] for d in data)
+
+    # CATEGORY
     category_total = {}
+    for d in data:
+        category_total[d["category"]] = category_total.get(d["category"], 0) + d["amount"]
+
+    # MONTH
     month_total = {}
+    for d in data:
+        m = d["date"][:7]
+        month_total[m] = month_total.get(m, 0) + d["amount"]
 
-    for e in expenses:
-        cat = e.get("category", "Other")
-        category_total[cat] = category_total.get(cat, 0) + int(e.get("amount", 0))
+    # INSIGHTS
+    top_category = max(category_total, key=category_total.get) if category_total else None
+    top_month = max(month_total, key=month_total.get) if month_total else None
 
-        if "date" in e:
-            month = e["date"][:7]
-            month_total[month] = month_total.get(month, 0) + int(e.get("amount", 0))
-
-    # Budget
-    budget_data = budget_collection.find_one({"user": user})
-    budget = int(budget_data["amount"]) if budget_data else 0
-
-    return render_template(
-        "index.html",
-        expenses=expenses,
+    return render_template("index.html",
+        expenses=data,
         total=total,
         category_total=category_total,
         month_total=month_total,
-        budget=budget
+        top_category=top_category,
+        top_month=top_month
     )
 
-# ---------------- REGISTER ----------------
-@app.route("/register", methods=["GET", "POST"])
-def register():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-
-        if users_collection.find_one({"username": username}):
-            return "User already exists!"
-
-        users_collection.insert_one({
-            "username": username,
-            "password": password
-        })
-
-        return redirect("/login")
-
-    return render_template("register.html")
-
-# ---------------- LOGIN ----------------
-@app.route("/login", methods=["GET", "POST"])
-def login():
-    if request.method == "POST":
-        username = request.form["username"]
-        password = request.form["password"]
-
-        user = users_collection.find_one({
-            "username": username,
-            "password": password
-        })
-
-        if user:
-            session["user"] = username
-            return redirect("/")
-
-        return "Invalid login!"
-
-    return render_template("login.html")
-
-# ---------------- ADD ----------------
-@app.route("/add", methods=["POST"])
+# -------- ADD --------
+@app.route('/add', methods=['POST'])
 def add():
-    if "user" not in session:
-        return redirect("/login")
-
-    expenses_collection.insert_one({
-        "user": session["user"],
-        "amount": request.form["amount"],
+    data = load_data()
+    data.append({
+        "amount": float(request.form["amount"]),
         "category": request.form["category"],
         "date": request.form["date"]
     })
+    save_data(data)
+    return redirect('/')
 
-    return redirect("/")
+# -------- DELETE --------
+@app.route('/delete/<int:i>')
+def delete(i):
+    data = load_data()
+    if i < len(data):
+        data.pop(i)
+    save_data(data)
+    return redirect('/')
 
-# ---------------- DELETE ----------------
-@app.route("/delete/<id>")
-def delete(id):
-    expenses_collection.delete_one({"_id": ObjectId(id)})
-    return redirect("/")
+# -------- EDIT --------
+@app.route('/edit/<int:i>', methods=['GET', 'POST'])
+def edit(i):
+    data = load_data()
 
-# ---------------- EDIT ----------------
-@app.route("/edit/<id>", methods=["GET", "POST"])
-def edit(id):
-    expense = expenses_collection.find_one({"_id": ObjectId(id)})
+    if request.method == 'POST':
+        data[i] = {
+            "amount": float(request.form["amount"]),
+            "category": request.form["category"],
+            "date": request.form["date"]
+        }
+        save_data(data)
+        return redirect('/')
 
-    if request.method == "POST":
-        expenses_collection.update_one(
-            {"_id": ObjectId(id)},
-            {"$set": {
-                "amount": request.form["amount"],
-                "category": request.form["category"],
-                "date": request.form["date"]
-            }}
-        )
-        return redirect("/")
+    return render_template("edit.html", e=data[i])
 
-    return render_template("edit.html", e=expense)
+# -------- AUTH --------
+@app.route('/register', methods=['GET','POST'])
+def register():
+    if request.method == 'POST':
+        users = load_users()
+        users[request.form['username']] = request.form['password']
+        save_users(users)
+        return redirect('/login')
+    return render_template("register.html")
 
-# ---------------- SET BUDGET ----------------
-@app.route("/budget", methods=["POST"])
-def set_budget():
-    if "user" not in session:
-        return redirect("/login")
+@app.route('/login', methods=['GET','POST'])
+def login():
+    if request.method == 'POST':
+        users = load_users()
+        u = request.form['username']
+        p = request.form['password']
 
-    amount = request.form["budget"]
+        if u in users and users[u] == p:
+            session['user'] = u
+            return redirect('/')
 
-    budget_collection.update_one(
-        {"user": session["user"]},
-        {"$set": {"amount": amount}},
-        upsert=True
-    )
+    return render_template("login.html")
 
-    return redirect("/")
-
-# ---------------- LOGOUT ----------------
-@app.route("/logout")
+@app.route('/logout')
 def logout():
-    session.pop("user", None)
-    return redirect("/login")
+    session.pop('user', None)
+    return redirect('/login')
 
-# ---------------- RUN ----------------
 if __name__ == "__main__":
     app.run(debug=True)
